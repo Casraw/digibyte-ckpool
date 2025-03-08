@@ -145,7 +145,7 @@ That often means DigiByte is **busy** performing initial operations (such as ind
 
 ## Support & Donations
 
-- **Docker Setup by Casraw**  
+- **Docker Setup by @Casraw**  
   `dgb1qpju3lje2rjtv8h5cxje3xlv3r3004y3s60uvag`
 
 - **Original CKPool Setup by Mecanix**  
