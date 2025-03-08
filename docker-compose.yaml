@@ -1,0 +1,60 @@
+version: '3'
+services:
+  digibyte-ckpool:
+    build:
+      context: .
+      # For x86_64 builds:
+      args:
+        TARGETARCH: amd64
+      # Or for ARM64:
+      # args:
+      #   TARGETARCH: arm64
+    container_name: digibyte-ckpool
+
+    # Define environment variables to fill the config files at runtime:
+    environment:
+      # DigiByte config
+      TESTNET: "0"
+      ALGO: "sha256d"
+      DAEMON: "1"
+      SERVER: "1"
+      TXINDEX: "0"
+      MAXCONNECTIONS: "300"
+      DISABLEWALLET: "0"
+      RPCALLOWIP: "127.0.0.1"
+      PORT: "8433"
+      RPCPORT: "8432"
+      RPCBIND: "127.0.0.1"
+      RPCUSER: "rpcuser"
+      RPCPASSWORD: "rpcpassword"
+      ONLYNET: "IPv4"
+      ZMQPUBHASHBLOCK: "tcp://127.0.0.1:28435"
+      DATADIR: "/home/cna.digibyte/mainnet"
+
+      # ckpool config
+      BTCD_URL: "127.0.0.1:8432"
+      BTCD_AUTH: "rpcuser"
+      BTCD_PASS: "rpcpassword"
+      SERVERURL: "0.0.0.0:3333"
+      BTCADDRESS: "dgb1qpju3lje2rjtv8h5cxje3xlv3r3004y3s60uvag"
+      BTCSIG: "/mined by Casraw/"
+      BLOCKPOLL: "50"
+      DONATION: "0.0"
+      NONCE1LENGTH: "4"
+      NONCE2LENGTH: "8"
+      UPDATE_INTERVAL: "5"
+      VERSION_MASK: "1fffe000"
+      MINDIFF: "512"
+      STARTDIFF: "10000"
+      LOGDIR: "/logs"
+      ZMQBLOCK: "tcp://127.0.0.1:28435"
+
+    volumes:
+      - ./data:/home/cna.digibyte/mainnet
+
+    ports:
+      # Publish DigiByte ports:
+      - "8433:8433"  # p2p
+      - "8432:8432"  # rpc
+      # Publish ckpool port (if you want to accept external connections for miners):
+      - "3333:3333"
