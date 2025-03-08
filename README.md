@@ -1,4 +1,3 @@
-```markdown
 # DigiByte + CKPool Docker Setup
 
 This repository contains a Docker-based setup that installs **DigiByte Core** and **ckpool** in a single container. It will:
@@ -21,7 +20,9 @@ This repository contains a Docker-based setup that installs **DigiByte Core** an
 - [Usage](#usage)
   - [Build and Run](#build-and-run)
   - [Verifying DigiByte](#verifying-digibyte)
-  - [Common Issue: Error Code -28](#common-issue-error-code--28)
+  - [Common Issues](#common-issues)
+    - [Error Code -28 (Loading Blocks...)](#error-code--28-loading-blocks)
+    - [Select Timed Out in read_socket_line / Failed to getblocktemplate](#select-timed-out-in-read_socket_line--failed-to-getblocktemplate)
 - [Support & Donations](#support--donations)
 - [License](#license)
 
@@ -110,7 +111,11 @@ digibyte-cli -conf=/etc/digibyte/digibyte.conf getblockchaininfo
 
 If you see blockchain info in JSON form, DigiByte is running fine.
 
-### Common Issue: Error Code -28
+---
+
+## Common Issues
+
+### Error Code -28 (Loading Blocks...)
 
 If you see something like:
 
@@ -121,6 +126,20 @@ Loading blocks... 50%
 ```
 
 This is **not** a critical failure. It means DigiByte is still starting up and loading its blockchain data. It **temporarily** can’t serve the `getblocktemplate` or other RPC calls. Simply wait for the node to finish loading (the percentage should reach 100%), and ckpool will be able to connect successfully.
+
+### Select Timed Out in read_socket_line / Failed to getblocktemplate
+
+If you see log entries like:
+
+```
+[2025-03-08 10:29:29.025] Failed to read socket line in _json_rpc_call ("getblock...") 66.675s
+[2025-03-08 10:29:29.025] 127.0.0.1:8432 Failed to get valid json response to getblocktemplate
+[2025-03-08 10:30:35.730] Select timed out in read_socket_line with errno 11: Resource temporarily unavailable
+```
+
+That often means DigiByte is **busy** performing initial operations (such as indexing blocks) and is **slow** to respond to ckpool’s RPC calls. If the node is under heavy load (during syncing, reindexing, etc.), ckpool may periodically fail its `getblocktemplate` calls.
+
+**Solution**: You generally just need to **wait**. Once DigiByte finishes the initial indexing or syncing, it will respond more quickly to RPC calls. ckpool will then fetch new block templates successfully. If you want to reduce these timeouts or wait for DigiByte to be fully loaded before starting ckpool, you can add a **wait loop** in your `entrypoint.sh` so ckpool only starts once DigiByte is actually responsive.
 
 ---
 
@@ -140,4 +159,3 @@ If you find this setup helpful, feel free to send a tip!
 
 This project is released under the [MIT License](https://opensource.org/licenses/MIT).  
 Refer to upstream DigiByte and ckpool licenses for their respective terms.
-```
