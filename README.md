@@ -7,6 +7,11 @@ This repository contains a Docker-based setup that installs **DigiByte Core** an
 3. Merge both configurations (DigiByte Core & ckpool) via environment variables from `docker-compose.yml`.  
 4. Provide a persistent volume to store the DigiByte blockchain data.
 
+**Note on Storage:**  
+- The DigiByte blockchain is **approximately 35.5 GB** in size (this can grow over time).  
+- The Docker image built by this repository is roughly **886.98 MB** in size.  
+These numbers may vary depending on your configuration and future blockchain growth.
+
 ---
 
 ## Table of Contents
@@ -31,7 +36,7 @@ This repository contains a Docker-based setup that installs **DigiByte Core** an
 ## Prerequisites
 
 - **Docker** and **Docker Compose** installed on your system.
-- Enough disk space to store the DigiByte blockchain data.
+- Sufficient disk space (at least 40GB+ to accommodate the DigiByte blockchain plus some overhead).
 
 ---
 
