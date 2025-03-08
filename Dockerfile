@@ -7,7 +7,7 @@ ARG DGB_VERSION=8.22.1
 
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
-    git curl build-essential yasm autoconf automake libtool libzmq3-dev pkgconf ca-certificates net-tools \
+    git curl build-essential yasm autoconf automake libtool libzmq3-dev pkgconf ca-certificates net-tools jq \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and install DigiByte Core

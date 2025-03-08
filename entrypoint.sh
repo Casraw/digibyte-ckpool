@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-set -e
+set +e
 
+touch /home/cna.digibyte/mainnet/debug.log
 DGB_CONF="/etc/digibyte/digibyte.conf"
-LOGFILE="/home/cna.digibyte/mainnet/debug.log"
+DGB_LOGFILE="/home/cna.digibyte/mainnet/debug.log"
 
 # Generate DigiByte Core config from environment variables:
 cat <<EOF > /etc/digibyte/digibyte.conf
@@ -30,26 +31,56 @@ echo "Starting DigiByte daemon..."
 digibyted -conf="$DGB_CONF" &
 DGB_PID=$!
 
-# Monitor digibyted startup and runtime
+echo "DigiByte started with PID=$DGB_PID"
+echo "Waiting for DigiByte to become ready (initial block download may take time)..."
+
 while true; do
-  # 1) Check if digibyted has crashed (process no longer running)
-  if ! kill -0 "$DGB_PID" 2>/dev/null; then
-    echo "digibyted has stopped unexpectedly. Here's the last 50 lines of the log:"
-    tail -n 50 "$LOGFILE" || true
-    # Exit the script so Docker sees the container fail and can restart it
-    exit 1
+  # 1) Check if digibyted is still running
+  #    kill -0 returns 0 if the process is alive, and non-zero if not.
+  kill -0 "$DGB_PID" 2>/dev/null
+  KILL_EXIT_CODE=$?
+
+  if [ $KILL_EXIT_CODE -ne 0 ]; then
+    # Here, kill -0 returned a code other than 0, which typically means
+    # "No such process" or "permission denied" (rare in a Docker container).
+    #
+    # In most cases, it means digibyted has exited or crashed.
+    # We'll confirm by checking if the process name is still visible via pgrep.
+
+    echo "kill -0 returned code $KILL_EXIT_CODE. Checking if digibyted still exists..."
+
+    if ! pgrep -x digibyted >/dev/null 2>&1; then
+      echo "digibyted is definitely not running. Exiting with error."
+      echo "Last 50 lines of debug.log:"
+      tail -n 50 "$DGB_LOGFILE" || true
+      exit 1
+    else
+      echo "Odd scenario: kill -0 says non-zero, but pgrep sees digibyted. Continuing..."
+    fi
   fi
 
-  # 2) Check if digibyted is responding to RPC
-  if digibyte-cli -conf="$DGB_CONF" getblockchaininfo >/dev/null 2>&1; then
-    echo "DigiByte RPC is up and running."
-    break
+  # 2) Attempt to call getblockchaininfo
+  OUTPUT=$(digibyte-cli -conf="$DGB_CONF" getblockchaininfo 2>&1)
+  RPC_EXIT_CODE=$?
+
+  if [ $RPC_EXIT_CODE -eq 0 ]; then
+    # Successfully got JSON; now parse the initialblockdownload field
+    IBD=$(echo "$OUTPUT" | jq -r '.initialblockdownload' 2>/dev/null)
+
+    # If .initialblockdownload is false, it's fully synced
+    if [ "$IBD" = "false" ]; then
+      echo "DigiByte has finished initial block download."
+      break
+    else
+      echo "DigiByte is still syncing. initialblockdownload=$IBD"
+    fi
   else
-    echo "Waiting for DigiByte RPC to become ready..."
-    # Print some log lines for visibility
-    tail -n 50 "$LOGFILE" || true
-    sleep 5
+    echo "DigiByte not ready. RPC error code $RPC_EXIT_CODE."
+    echo "Output: $OUTPUT"
   fi
+
+  echo "Sleeping 10s..."
+  sleep 10
 done
 
 # Generate ckpool config from environment variables:
@@ -80,6 +111,8 @@ cat <<EOF > /etc/ckpool/digibyte.json
 }
 EOF
 
+set -e
+
 # Finally, start ckpool in the foreground:
 echo "Starting ckpool..."
 cd /ckpool/src
@@ -93,7 +126,7 @@ while true; do
   sleep 30
 
   # a) Check if digibyted is still running
-  if ! kill -0 "$DGB_PID" 2>/dev/null; then
+  if ! pgrep -x digibyted >/dev/null 2>&1; then
     echo "digibyted process has exited unexpectedly."
     echo "Showing last 50 lines of the DigiByte log:"
     tail -n 50 "$DGB_LOGFILE" || true
