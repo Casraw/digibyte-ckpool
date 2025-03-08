@@ -145,11 +145,12 @@ That often means DigiByte is **busy** performing initial operations (such as ind
 
 ## Support & Donations
 
-- **Docker Setup by @Casraw**  
-  `dgb1qpju3lje2rjtv8h5cxje3xlv3r3004y3s60uvag`
+- **Docker Setup by Casraw**  
+  - DigiByte Address: `dgb1qpju3lje2rjtv8h5cxje3xlv3r3004y3s60uvag`  
+  - GitHub: [Casraw](https://github.com/Casraw/)
 
 - **Original CKPool Setup by Mecanix**  
-  `dgb1qk2n9m3mpjka2ym7s9jcergznyz7fpzh5wy2hj3`
+  - DigiByte Address: `dgb1qk2n9m3mpjka2ym7s9jcergznyz7fpzh5wy2hj3`
 
 If you find this setup helpful, feel free to send a tip!
 
