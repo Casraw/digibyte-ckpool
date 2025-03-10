@@ -1,16 +1,14 @@
-# DigiByte + CKPool Docker Setup
+# DigiByte CKPool Docker Setup
 
-This repository contains a Docker-based setup that installs **DigiByte Core** and **ckpool** in a single container. It will:
+This repository provides a convenient Docker setup combining DigiByte Core, ckpool, PostgreSQL, and the ckstats monitoring dashboard. It includes Docker Compose configuration for quick deployment and easy scalability.
 
-1. Download, install, and run **DigiByte Core** (either x86_64 or ARM64 build).  
-2. Compile **ckpool** from source.  
-3. Merge both configurations (DigiByte Core & ckpool) via environment variables from `docker-compose.yml`.  
-4. Provide a persistent volume to store the DigiByte blockchain data.
+## Features
 
-**Note on Storage:**  
-- The DigiByte blockchain is **approximately 35.5 GB** in size (this can grow over time).  
-- The Docker image built by this repository is roughly **886.98 MB** in size.  
-These numbers may vary depending on your configuration and future blockchain growth.
+- Builds and runs DigiByte Core (x86_64 or ARM64).
+- Compiles and runs ckpool from source.
+- Persistent storage for DigiByte blockchain data.
+- PostgreSQL database integration for statistics and monitoring.
+- Web-based monitoring dashboard (ckstats), accessible via `localhost:3000`.
 
 ---
 
@@ -18,147 +16,180 @@ These numbers may vary depending on your configuration and future blockchain gro
 
 - [Prerequisites](#prerequisites)
 - [File Structure](#file-structure)
-- [Configuration Overview](#configuration-overview)
-  - [DigiByte Core](#digibyte-core)
-  - [CKPool](#ckpool)
-  - [Important Note on Naming](#important-note-on-naming)
-- [Usage](#usage)
-  - [Build and Run](#build-and-run)
-  - [Verifying DigiByte](#verifying-digibyte)
-  - [Common Issues](#common-issues)
-    - [Error Code -28 (Loading Blocks...)](#error-code--28-loading-blocks)
-    - [Select Timed Out in read_socket_line / Failed to getblocktemplate](#select-timed-out-in-read_socket_line--failed-to-getblocktemplate)
+- [Docker Compose Services](#docker-compose-services)
+  - [digibyte-ckpool](#digibyte-ckpool)
+  - [PostgreSQL](#postgresql)
+  - [ckstats Dashboard](#ckstats-dashboard)
+- [Setup & Run](#build--run)
+- [Accessing ckstats Dashboard](#accessing-the-ckstats-dashboard)
+- [Troubleshooting](#common-issues)
 - [Support & Donations](#support--donations)
 - [License](#license)
 
----
-
 ## Prerequisites
 
-- **Docker** and **Docker Compose** installed on your system.
-- Sufficient disk space (at least 40GB+ to accommodate the DigiByte blockchain plus some overhead).
-
----
+- Docker & Docker Compose installed.
+- At least 200GB available disk space (for blockchain data).
 
 ## File Structure
 
-Within this repository, you will find:
-
-```
+```plaintext
 .
-├── Dockerfile        # Docker build instructions
-├── entrypoint.sh     # Container startup script
+├── ckpool/             # ckpool Docker build context
+├── ckstats/            # ckstats dashboard Docker build context
+├── db/                 # PostgreSQL setup
+│   ├── data/           # Persistent database data
+│   └── init-user-db.sh # Initialization script for database
 ├── docker-compose.yml
-└── README.md         # This file
+├── entrypoint.sh       # Container entrypoint script
+└── README.md           # This documentation
 ```
 
-You will also want to create a local directory (e.g., `data/`) which is mounted as a volume for the DigiByte data.
+## Docker Compose Services
 
----
+### digibyte-ckpool
+- **DigiByte Core** node and **ckpool** mining pool integrated.
+- Configurable via environment variables in `docker-compose.yml`.
+- Persistent blockchain data in `./ckpool/data`.
 
-## Configuration Overview
+### PostgreSQL
+- Database service for storing ckstats monitoring data.
+- Uses default database credentials:
+  - User: `ckstats`
+  - Password: `ckstats`
+  - Database: `ckstats`
+- Exposes port `5432`.
 
-### DigiByte Core
+### ckstats Dashboard
+- Web-based monitoring dashboard.
+- Accessible at `http://localhost:3000`.
+- Depends on PostgreSQL database.
 
-By default, the container:
+## Docker Compose Configuration
 
-- Runs on `mainnet`.
-- Uses the `sha256d` mining algorithm.
-- Exposes ports `8433` (p2p) and `8432` (RPC).
-- Keeps a persistent data directory mounted at `/home/cna.digibyte/mainnet`.
+Here's the complete Docker Compose file for deployment:
 
-Configuration values for DigiByte are set in `docker-compose.yml` as environment variables and written to `/etc/digibyte/digibyte.conf` at container startup.
+```yaml
+services:
+  digibyte-ckpool:
+    build:
+      context: ckpool/
+      args:
+        TARGETARCH: amd64
+    container_name: digibyte-ckpool
+    environment:
+      TESTNET: "0"
+      ALGO: "sha256d"
+      DAEMON: "1"
+      SERVER: "1"
+      TXINDEX: "0"
+      MAXCONNECTIONS: "300"
+      DISABLEWALLET: "0"
+      RPCALLOWIP: "0.0.0.0/0"
+      PORT: "8433"
+      RPCPORT: "8432"
+      RPCBIND: "0.0.0.0"
+      RPCUSER: "rpcuser"
+      RPCPASSWORD: "rpcpassword"
+      ONLYNET: "IPv4"
+      ZMQPUBHASHBLOCK: "tcp://127.0.0.1:28435"
+      DATADIR: "/home/cna.digibyte/mainnet"
 
-### CKPool
+      BTCD_URL: "127.0.0.1:8432"
+      BTCD_AUTH: "rpcuser"
+      BTCD_PASS: "rpcpassword"
+      SERVERURL: "0.0.0.0:3333"
+      BTCADDRESS: "dgb1qpju3lje2rjtv8h5cxje3xlv3r3004y3s60uvag"
+      BTCSIG: "/mined by Casraw/"
+      BLOCKPOLL: "50"
+      DONATION: "0.0"
+      NONCE1LENGTH: "4"
+      NONCE2LENGTH: "8"
+      UPDATE_INTERVAL: "5"
+      VERSION_MASK: "1fffe000"
+      MINDIFF: "512"
+      STARTDIFF: "10000"
+      LOGDIR: "/logs"
+      ZMQBLOCK: "tcp://127.0.0.1:28435"
 
-- It polls the local DigiByte node via `127.0.0.1:8432`.
-- A single config file `/etc/ckpool/digibyte.json` is generated at startup.
-- Exposes port `3333` for mining connections (defined in `docker-compose.yml`).
+    volumes:
+      - ./ckpool/data:/home/cna.digibyte/mainnet
 
-All parameters (e.g., `serverurl`, `btcaddress`, `zmqblock`) can be adjusted in `docker-compose.yml`.
+    ports:
+      - "8433:8433"
+      - "8432:8432"
+      - "3333:3333"
+      - "4028:4028"
+      - "3001:80"
 
-#### Important Note on Naming
+  db:
+    image: postgres:13
+    container_name: db
+    environment:
+      POSTGRES_USER: ckstats
+      POSTGRES_PASSWORD: ckstats
+      POSTGRES_DB: ckstats
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+      - ./db/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ckstats -t 20 && psql -U ckstats -d dbshadow -c 'SELECT 1' >/dev/null 2>&1"]
+      interval: 20s
+      timeout: 30s
+      retries: 5
 
-The ckpool code references some variables (like `btcaddress` and `btcsig`) because it was originally created for Bitcoin. However, in this Docker setup for DigiByte:
+  ckstats:
+    build:
+      context: ckstats/
+      dockerfile: Dockerfile
+      args:
+        TARGETARCH: amd64
+    container_name: ckstats
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://ckstats:ckstats@db/ckstats"
+      SHADOW_DATABASE_URL: "postgres://ckstats:ckstats@db/dbshadow"
+      API_URL: "http://digibyte-ckpool:4028"
+      RPCUSER: "rpcuser"
+      RPCPASSWORD: "rpcpassword"
+      RPCPORT: "8432"
+    ports:
+      - "3000:3000"
+```
 
-- **`btcaddress`** must actually be a **DigiByte address**, since it specifies where mined rewards go.  
-- **`btcsig`** can be any custom tag or signature string (e.g., `/mined by me/`) and will appear in coinbase transaction data.
+## Build & Run
 
----
-
-## Usage
-
-### Build and Run
-
-1. **Clone** this repository or copy the files into a new directory.
-2. **Create a subdirectory** named `data` (or whichever name you use in the volume config) to store DigiByte blockchain data.
-3. **Edit environment variables** in `docker-compose.yml` to match your desired settings:
-   - `RPCUSER`, `RPCPASSWORD`, `BTCD_PASS`, **`BTCADDRESS`** (which should be your DigiByte address), etc.
-4. **Run**:
-
-   ```bash
-   docker-compose up --build
-   ```
-
-   This will:
-   - Build the image.
-   - Start the DigiByte daemon in the background.
-   - Start `ckpool` in the foreground.
-
-### Verifying DigiByte
-
-Once running, you can verify that DigiByte is running correctly by opening a new terminal and checking:
+Clone this repository and launch all services:
 
 ```bash
-docker exec -it digibyte-ckpool bash
-digibyte-cli -conf=/etc/digibyte/digibyte.conf getblockchaininfo
+docker-compose up --build
 ```
 
-If you see blockchain info in JSON form, DigiByte is running fine.
+## Verify DigiByte Node
 
----
+Check the node's status:
+
+```bash
+docker exec -it digibyte-ckpool digibyte-cli -conf=/etc/digibyte/digibyte.conf getblockchaininfo
+```
 
 ## Common Issues
 
-### Error Code -28 (Loading Blocks...)
+- **Error Code -28 (Loading Blocks...)**: Wait until DigiByte finishes syncing.
+- **RPC connection issues:** Wait for node initialization.
 
-If you see something like:
+## Donations & Support
 
-```
-error code: -28
-error message:
-Loading blocks... 50%
-```
+- **DigiByte Address:** `dgb1qpju3lje2rjtv8h5cxje3xlv3r3004y3s60uvag`
+- **GitHub:** [Casraw](https://github.com/Casraw/)
 
-This is **not** a critical failure. It means DigiByte is still starting up and loading its blockchain data. It **temporarily** can’t serve the `getblocktemplate` or other RPC calls. Simply wait for the node to finish loading (the percentage should reach 100%), and ckpool will be able to connect successfully.
-
-### Select Timed Out in read_socket_line / Failed to getblocktemplate
-
-If you see log entries like:
-
-```
-[2025-03-08 10:29:29.025] Failed to read socket line in _json_rpc_call ("getblock...") 66.675s
-[2025-03-08 10:29:29.025] 127.0.0.1:8432 Failed to get valid json response to getblocktemplate
-[2025-03-08 10:30:35.730] Select timed out in read_socket_line with errno 11: Resource temporarily unavailable
-```
-
-That often means DigiByte is **busy** performing initial operations (such as indexing blocks) and is **slow** to respond to ckpool’s RPC calls. If the node is under heavy load (during syncing, reindexing, etc.), ckpool may periodically fail its `getblocktemplate` calls.
-
-**Solution**: You generally just need to **wait**. Once DigiByte finishes the initial indexing or syncing, it will respond more quickly to RPC calls. ckpool will then fetch new block templates successfully. If you want to reduce these timeouts or wait for DigiByte to be fully loaded before starting ckpool, you can add a **wait loop** in your `entrypoint.sh` so ckpool only starts once DigiByte is actually responsive.
-
----
-
-## Support & Donations
-
-- **Docker Setup by Casraw**  
-  - DigiByte Address: `dgb1qpju3lje2rjtv8h5cxje3xlv3r3004y3s60uvag`  
-  - GitHub: [Casraw](https://github.com/Casraw/)
-
-If you find this setup helpful, feel free to send a tip!
-
----
+Feel free to donate if this setup helps you!
 
 ## License
 
-This project is released under the [MIT License](https://opensource.org/licenses/MIT).  
-Refer to upstream DigiByte and ckpool licenses for their respective terms.
+Licensed under the [MIT License](https://opensource.org/licenses/MIT).
+Refer to DigiByte and ckpool licenses for their specific terms.

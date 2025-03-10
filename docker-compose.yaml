@@ -1,8 +1,7 @@
-version: '3'
 services:
   digibyte-ckpool:
     build:
-      context: .
+      context: ckpool/
       # For x86_64 builds:
       args:
         TARGETARCH: amd64
@@ -21,10 +20,10 @@ services:
       TXINDEX: "0"
       MAXCONNECTIONS: "300"
       DISABLEWALLET: "0"
-      RPCALLOWIP: "127.0.0.1"
+      RPCALLOWIP: "0.0.0.0/0"
       PORT: "8433"
       RPCPORT: "8432"
-      RPCBIND: "127.0.0.1"
+      RPCBIND: "0.0.0.0"
       RPCUSER: "rpcuser"
       RPCPASSWORD: "rpcpassword"
       ONLYNET: "IPv4"
@@ -50,11 +49,61 @@ services:
       ZMQBLOCK: "tcp://127.0.0.1:28435"
 
     volumes:
-      - ./data:/home/cna.digibyte/mainnet
+      - ./ckpool/data:/home/cna.digibyte/mainnet
 
     ports:
       # Publish DigiByte ports:
       - "8433:8433"  # p2p
+      # Publish DigiByte RPC port:
       - "8432:8432"  # rpc
       # Publish ckpool port (if you want to accept external connections for miners):
       - "3333:3333"
+      # API port (for ckstats):
+      - "4028:4028"
+      # API port (for ckstats):
+      - "3001:80"
+
+  db:
+    image: postgres:13
+    container_name: db
+    environment:
+      POSTGRES_USER: ckstats
+      POSTGRES_PASSWORD: ckstats
+      POSTGRES_DB: ckstats
+    volumes:
+      - ./db/data:/var/lib/postgresql/data
+      - ./db/init-user-db.sh:/docker-entrypoint-initdb.d/init-user-db.sh
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ckstats -t 20 && psql -U ckstats -d dbshadow -c 'SELECT 1' >/dev/null 2>&1"]
+      interval: 20s
+      timeout: 30s
+      retries: 5
+  ckstats:
+    build:
+      context: ckstats/
+      dockerfile: Dockerfile
+      # For x86_64 builds:
+      args:
+        TARGETARCH: amd64
+      # Or for ARM64:
+      # args:
+      #   TARGETARCH: arm64
+    container_name: ckstats
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgres://ckstats:ckstats@db/ckstats"
+      SHADOW_DATABASE_URL: "postgres://ckstats:ckstats@db/dbshadow"
+      API_URL: "http://digibyte-ckpool"
+      RPCUSER: "rpcuser"
+      RPCPASSWORD: "rpcpassword"
+      RPCPORT: "8432"
+    ports:
+    # Publish ckstats port:
+      - "3000:3000"
+
+
+

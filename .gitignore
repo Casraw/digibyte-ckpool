@@ -1,4 +1,7 @@
-data/*
-!data/.gitkeep
+ckpool/data/*
+!ckpool/data/.gitkeep
 data.bak/
 data.bak.bak/
+db/data/*
+db/data_shadow/*
+.db/

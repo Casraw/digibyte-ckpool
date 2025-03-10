@@ -27,6 +27,37 @@ rpcport=${RPCPORT}
 rpcbind=${RPCBIND}
 EOF
 
+cat <<EOF > /etc/apache2/sites-available/users.conf
+<VirtualHost *:80>
+    ServerName localhost
+    
+    DocumentRoot /logs
+
+    <Directory "/logs">
+        Options Indexes FollowSymLinks
+        AllowOverride None
+        Require all granted
+
+        # Die konkrete Datei als JSON ausliefern, auch ohne .json-Endung
+        <Files *>
+            ForceType application/json
+        </Files>
+    </Directory>
+
+    # Logfiles anpassen wie du möchtest:
+    ErrorLog ${APACHE_LOG_DIR}/users_error.log
+    CustomLog ${APACHE_LOG_DIR}/users_access.log combined
+</VirtualHost>
+EOF
+
+# Enable the users site and disable the default site
+a2dissite 000-default
+a2ensite users
+# Start Apache
+service apache2 start
+# Reload Apache
+service apache2 reload
+
 echo "Starting DigiByte daemon..."
 digibyted -conf="$DGB_CONF" &
 DGB_PID=$!
@@ -110,21 +141,21 @@ cat <<EOF > /etc/ckpool/digibyte.json
   "zmqblock" : "${ZMQBLOCK}"
 }
 EOF
-
 set -e
 
 # Finally, start ckpool in the foreground:
 echo "Starting ckpool..."
 cd /ckpool/src
-exec ./ckpool -B -c /etc/ckpool/digibyte.json
+exec ./ckpool -B -c /etc/ckpool/digibyte.json &
 CKP_PID=$!
-
+sleep 120
+chmod +rx -R /logs/
 # 3) Periodically monitor both processes
 #    - If DigiByte dies, kill ckpool and exit
 #    - If ckpool dies, exit
 while true; do
   sleep 30
-
+  
   # a) Check if digibyted is still running
   if ! pgrep -x digibyted >/dev/null 2>&1; then
     echo "digibyted process has exited unexpectedly."

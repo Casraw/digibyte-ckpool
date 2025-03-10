@@ -1,0 +1,4 @@
+*/1 * * * * export FNM_PATH="/root/.local/share/fnm" && export PATH="$FNM_PATH:$PATH" && eval "`fnm env --use-on-cd`" && cd /app/ckstats && pnpm seed
+*/1 * * * * export FNM_PATH="/root/.local/share/fnm" && export PATH="$FNM_PATH:$PATH" && eval "`fnm env --use-on-cd`" && cd /app/ckstats && pnpm update-users
+5 */2 * * * export FNM_PATH="/root/.local/share/fnm" && export PATH="$FNM_PATH:$PATH" && eval "`fnm env --use-on-cd`" && cd /app/ckstats && pnpm cleanup
+5 1 * * * export FNM_PATH="/root/.local/share/fnm" && export PATH="$FNM_PATH:$PATH" && eval "`fnm env --use-on-cd`" && cd /app/ckstats && pnpm vacuum

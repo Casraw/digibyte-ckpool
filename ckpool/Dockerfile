@@ -4,10 +4,11 @@ FROM ubuntu:22.04
 # Let’s define some build arguments
 ARG TARGETARCH
 ARG DGB_VERSION=8.22.1
+ENV FNM_PATH="/root/.local/share/fnm"
 
 # Install necessary dependencies
 RUN apt-get update && apt-get install -y \
-    git curl build-essential yasm autoconf automake libtool libzmq3-dev pkgconf ca-certificates net-tools jq \
+    git curl build-essential yasm autoconf automake libtool libzmq3-dev pkgconf ca-certificates net-tools jq unzip apache2 nano \
     && rm -rf /var/lib/apt/lists/*
 
 # Download and install DigiByte Core
@@ -26,10 +27,9 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
 # Build ckpool from source
     RUN git clone https://bitbucket.org/ckolivas/ckpool.git /ckpool \
     && cd /ckpool \
-    && sed -i 's/\(#define WAIT_FOR_DAEMON_RETRY[ \t]*\)120/\1 3600/' src/connector.c \
     && chmod +x autogen.sh \
     && ./autogen.sh \
-    && ./configure --without-ckdb \
+    && ./configure \
     && make
 
 # Create necessary directories
@@ -41,6 +41,6 @@ COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 # Expose DigiByte ports (p2p=8433, RPC=8432) and example ckpool port (3333)
-EXPOSE 8433 8432 3333
+EXPOSE 8433 8432 3333 80
 
 ENTRYPOINT ["/entrypoint.sh"]
