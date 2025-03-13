@@ -1,4 +1,4 @@
-name: docker/build-push-action
+name: docker/build-push-action-ckpool
 
 on:
   push:

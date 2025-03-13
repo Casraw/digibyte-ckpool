@@ -1,4 +1,4 @@
-name: docker/build-push-action
+name: docker/build-push-action-ckstats
 
 on:
   push:
@@ -17,7 +17,7 @@ permissions:
   contents: write
 
 env:
-  IMAGE_NAME: casraw/digibyte-ckpool
+  IMAGE_NAME: casraw/digibyte-ckstats
   SHA: ${{ github.sha }}
 
 concurrency:
