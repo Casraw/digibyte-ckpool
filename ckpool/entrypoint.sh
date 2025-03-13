@@ -15,16 +15,24 @@ server=${SERVER}
 txindex=${TXINDEX}
 maxconnections=${MAXCONNECTIONS}
 disablewallet=${DISABLEWALLET}
-rpcallowip=${RPCALLOWIP}
-rpcuser=${RPCUSER}
-rpcpassword=${RPCPASSWORD}
 onlynet=${ONLYNET}
 zmqpubhashblock=${ZMQPUBHASHBLOCK}
-
+[main]
 datadir=${DATADIR}
 port=${PORT}
 rpcport=${RPCPORT}
 rpcbind=${RPCBIND}
+rpcallowip=${RPCALLOWIP}
+rpcuser=${RPCUSER}
+rpcpassword=${RPCPASSWORD}
+[test]
+datadir=${DATADIR}/testnet
+port=${PORT}
+rpcport=${RPCPORT}
+rpcbind=${RPCBIND}
+rpcallowip=${RPCALLOWIP}
+rpcuser=${RPCUSER}
+rpcpassword=${RPCPASSWORD}
 EOF
 
 cat <<EOF > /etc/apache2/sites-available/users.conf
@@ -57,6 +65,11 @@ a2ensite users
 service apache2 start
 # Reload Apache
 service apache2 reload
+
+if [ "$TESTNET" = "1" ]; then
+  echo "Running in testnet mode."
+  mkdir -p ${DATADIR}/testnet
+fi
 
 echo "Starting DigiByte daemon..."
 digibyted -conf="$DGB_CONF" &

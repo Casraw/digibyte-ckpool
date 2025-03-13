@@ -9,7 +9,8 @@ services:
       # args:
       #   TARGETARCH: arm64
     container_name: digibyte-ckpool
-
+    # Restart the container automatically if it exits:
+    restart: always
     # Define environment variables to fill the config files at runtime:
     environment:
       # DigiByte config
@@ -65,6 +66,8 @@ services:
 
   db:
     image: postgres:13
+    # Restart the container automatically if it exits:
+    restart: always
     container_name: db
     environment:
       POSTGRES_USER: ckstats
@@ -91,6 +94,8 @@ services:
       # args:
       #   TARGETARCH: arm64
     container_name: ckstats
+    # Restart the container automatically if it exits:
+    restart: always
     depends_on:
       db:
         condition: service_healthy
