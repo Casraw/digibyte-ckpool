@@ -96,7 +96,7 @@ jobs:
             type=semver,pattern={{major}}
             type=sha
       - name: Build and push Docker image ckpool
-        id: build-and-push
+        id: build-and-push-ckpool
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64
@@ -110,7 +110,7 @@ jobs:
           outputs: ${{ github.event_name == 'pull_request' && 'type=cacheonly' || 'type=registry,push=true' }}
           provenance: mode=max
       - name: Build and push Docker image ckstats
-        id: build-and-push
+        id: build-and-push-ckstats
         uses: docker/build-push-action@v6
         with:
           platforms: linux/amd64
