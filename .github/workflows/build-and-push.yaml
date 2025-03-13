@@ -37,7 +37,7 @@ jobs:
           git remote add upstream https://bitbucket.org/ckolivas/ckpool.git
           git fetch upstream
 
-          UPSTREAM_LATEST_COMMIT=$(git rev-parse upstream/main)
+          UPSTREAM_LATEST_COMMIT=$(git rev-parse upstream/master)
 
           if [ -f upstream-latest.txt ]; then
             LAST_SAVED_COMMIT=$(cat upstream-latest.txt)
