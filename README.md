@@ -193,3 +193,5 @@ Feel free to donate if this setup helps you!
 
 Licensed under the [MIT License](https://opensource.org/licenses/MIT).
 Refer to DigiByte and ckpool licenses for their specific terms.
+
+test

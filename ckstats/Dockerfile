@@ -8,7 +8,7 @@ ARG DGB_VERSION=8.22.1
 ENV FNM_PATH="/root/.local/share/fnm"
 
 # Install necessary dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     git curl build-essential net-tools unzip jq cron nano \
     && rm -rf /var/lib/apt/lists/*
 
