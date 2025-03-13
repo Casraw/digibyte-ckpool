@@ -7,7 +7,7 @@ ARG DGB_VERSION=8.22.1
 ENV FNM_PATH="/root/.local/share/fnm"
 
 # Install necessary dependencies
-RUN apt-get update && aüt-get upgrade -y && apt-get install -y \
+RUN apt-get update && apt-get upgrade -y && apt-get install -y \
     git curl build-essential yasm autoconf automake libtool libzmq3-dev pkgconf ca-certificates net-tools jq unzip apache2 nano \
     && rm -rf /var/lib/apt/lists/*
 
