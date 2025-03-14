@@ -51,6 +51,7 @@ services:
 
     volumes:
       - ./ckpool/data:/home/cna.digibyte/mainnet
+      - ./ckpool/data/logs:/logs
 
     ports:
       # Publish DigiByte ports:
