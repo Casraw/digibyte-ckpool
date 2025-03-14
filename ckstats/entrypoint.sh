@@ -52,4 +52,5 @@ cd /app/ckstats
 # build the app
 pnpm build
 # start the server
+service cron restart
 pnpm start
