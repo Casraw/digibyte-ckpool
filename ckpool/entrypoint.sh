@@ -92,7 +92,6 @@ while true; do
     # We'll confirm by checking if the process name is still visible via pgrep.
 
     echo "kill -0 returned code $KILL_EXIT_CODE. Checking if digibyted still exists..."
-
     if ! pgrep -x digibyted >/dev/null 2>&1; then
       echo "digibyted is definitely not running. Exiting with error."
       echo "Last 50 lines of debug.log:"
@@ -123,8 +122,8 @@ while true; do
     echo "Output: $OUTPUT"
   fi
 
-  echo "Sleeping 10s..."
-  sleep 10
+  echo "Sleeping 120s..."
+  sleep 120
 done
 
 # Generate ckpool config from environment variables:
