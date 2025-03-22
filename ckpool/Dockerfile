@@ -40,6 +40,10 @@ VOLUME /home/cna.digibyte/mainnet
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
+# Copy in the ckpool the healthcheck script and make it executable
+COPY healthcheck.sh /healthcheck.sh
+RUN chmod +x /healthcheck.sh
+
 # Expose DigiByte ports (p2p=8433, RPC=8432) and example ckpool port (3333)
 EXPOSE 8433 8432 3333 80
 

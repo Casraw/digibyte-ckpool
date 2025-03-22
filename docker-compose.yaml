@@ -12,6 +12,12 @@ services:
     # Restart the container automatically if it exits:
     restart: always
     # Define environment variables to fill the config files at runtime:
+    healthcheck:
+      test: ["CMD", "bash", "/healthcheck.sh"]
+      interval: 10s
+      timeout: 30s
+      retries: 10
+      start_period: 60s
     environment:
       # DigiByte config
       TESTNET: "0"
